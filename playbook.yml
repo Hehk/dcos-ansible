@@ -1,0 +1,15 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - common
+
+- hosts: private
+  become: true
+  roles:
+    - private
+
+- hosts: public
+  become: true
+  roles:
+    - public

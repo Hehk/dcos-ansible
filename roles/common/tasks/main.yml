@@ -1,0 +1,94 @@
+---
+# Tasks for setting up standard server
+
+- name: Upgrade all packages
+  yum: name=* state=latest
+
+- name: Install prerequisite packages for DC/OS
+  yum: name={{ item }} state=present
+  with_items:
+    - ntp
+    - tar
+    - xz
+    - unzip
+    - curl
+    - ipset
+
+# Setting language
+
+- name: Setting Language Environment Variables
+  lineinfile:
+    path: .bash_profile
+    state: present
+    regexp: '^{{ item }}'
+    line: '{{ item }}=en_US.utf-8'
+  with_items:
+    - LANG
+    - LC_ALL
+
+# Set hostname for dns lookup
+- name: Setting up hostname
+  command: echo "$(hostname -i) $(hostname -s) $(hostname -f)" >> /etc/hosts
+
+
+# Disable firewalld fue to issue with Docker
+
+- name: Disable firewalld
+  ignore_errors: True
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+# Setting up Docker in DC/OS supported version
+
+- name: Add Docker yum repository
+  yum_repository:
+    name: dockerrepo
+    description: Docker Repository
+    baseurl: https://yum.dockerproject.org/repo/main/centos/7/
+    gpgkey: https://yum.dockerproject.org/gpg
+    gpgcheck: yes
+    file: docker
+
+- name: Remove Current Docker Engine
+  yum: name={{ item }} state=absent
+  with_items:
+    - docker-engine
+    - docker-engine-selinux
+
+- name: Install Docker Engine
+  yum:
+    name: docker-engine-1.13.1
+    update_cache: yes
+
+- name: Create Docker Group
+  group:
+    name: docker
+    state: present
+
+- name: Start Docker Service
+  service:
+    name: docker
+    enabled: yes
+    state: started
+
+# Put SELinux in permissive mode, logging actions that would be blocked
+
+- name: Set SELinux to permissive mode
+  selinux:
+    policy: targeted
+    state: permissive
+
+# Create nogroup
+
+- name: Add nogroup to groups
+  group:
+    name: nogroup
+    state: present
+
+
+
+
+
+

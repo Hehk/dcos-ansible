@@ -1,0 +1,18 @@
+---
+# Setup for private agent node, post common install steps
+
+- name: Make /tmp/dcos directory
+  file:
+    path: /tmp/dcos
+    state: directory
+
+- name: Download installer from bootstrap
+  get_url:
+    url: "{{ bootstrap_url }}:{{ bootstrap_port }}/dcos_install.sh"
+    dest: "/tmp/dcos/dcos_install.sh"
+
+- name: Install DC/OS
+  command: "bash dcos_install.sh slave"
+  args:
+    chdir: /tmp/dcos
+  
